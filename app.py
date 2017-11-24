@@ -1,6 +1,10 @@
-from flask import Flask, render_template, request, current_app, send_from_directory, url_for
+from flask import *
 import os, uuid
+from pprint import pprint
+from database import init_db, checkLogin
 app = Flask(__name__)
+
+init_db()
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -8,6 +12,17 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route('/', methods=['GET'])
 def index():
     return render_template('upload.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    else:
+        user = checkLogin(request.form['username'], request.form['password'])
+        if user is False:
+            return "Invalid login. Please enter correct credentials"
+        else:
+            return "Hello %s" % user['firstName']
 
 
 @app.route('/upload', methods=['POST'])
@@ -27,3 +42,4 @@ def upload_file():
 def download(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
     return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
+
