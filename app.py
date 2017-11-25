@@ -1,17 +1,32 @@
 from flask import *
 import os, uuid
-from pprint import pprint
-from database import init_db, checkLogin
+from database import init_db, checkLogin, register
 app = Flask(__name__)
 
 init_db()
+
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('upload.html')
+    if 'user' in session:
+        return render_template('upload.html')
+    else:
+        return "You are not logged in. Please login." #put login at some point
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'GET':
+        return render_template('signup.html')
+    else:
+        success = register(request.form['username'],request.form['password'],request.form['firstName'],request.form['lastName'])
+        if success is True:
+            return "Signup successful!"
+        else:
+            return "Signup failed: Email already exists!"
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -22,8 +37,14 @@ def login():
         if user is False:
             return "Invalid login. Please enter correct credentials"
         else:
+            session["user"] = user
             return "Hello %s" % user['firstName']
 
+@app.route('/logout')
+def logout():
+    # remove the username from the session if it's there
+    session.pop('user', None)
+    return "You have sucessfully logged out."
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -42,4 +63,3 @@ def upload_file():
 def download(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
     return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
-

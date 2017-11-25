@@ -1,5 +1,6 @@
 import sqlite3
 from flask import g, Flask
+from pprint import pprint
 app = Flask(__name__)
 
 DATABASE = 'database.db'
@@ -24,6 +25,12 @@ def get_db():
     db.row_factory = make_dicts
     return db
 
+def mutate_db(query, args=()):
+    db = get_db()
+    db.execute(query, args)
+    db.commit()
+    return True
+
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
@@ -46,3 +53,12 @@ def checkLogin(username,password):
         return False
     else:
         return user
+
+def register(username,password,firstName,lastName):
+    try:
+        user = mutate_db("INSERT INTO User (email, password, firstName, lastName) VALUES (?,?,?,?)",
+                    [username,password,firstName,lastName])
+        return True
+    except Exception as e:
+        return False
+    
