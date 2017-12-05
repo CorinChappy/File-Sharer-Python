@@ -1,6 +1,6 @@
 from flask import *
 import os, uuid
-from database import init_db, checkLogin, register
+from database import init_db, checkLogin, register, addFile, collectFile
 app = Flask(__name__)
 
 init_db()
@@ -55,6 +55,7 @@ def upload_file():
         os.makedirs(upload_dir)
         upload_location = os.path.join(upload_dir,f.filename)
         f.save(upload_location) 
+        addFile(id,f.filename) # to change later --- just testing it works
         return "Upload success: your unique URL is: http://localhost:5000%s" % url_for('download',id=id, filename=f.filename)
     else:
         return "Please supply a file"
@@ -62,4 +63,5 @@ def upload_file():
 @app.route('/download/<id>/<filename>', methods=['GET'])
 def download(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
+    collectFile(id)
     return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
