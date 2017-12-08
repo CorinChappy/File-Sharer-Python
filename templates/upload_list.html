@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <title>Your uploads</title>
+    </head>
+
+    <body>
+        <h1>Your uploads</h1>
+        <table>
+            <!-- Column headers -->
+            {% if data %}
+            <tr>
+                {% for key in data[0] %}
+                    <th>{{ key }}</th> 
+                {% endfor %}
+            </tr>
+            {% endif %}
+
+            <!-- data entries -->
+            {% for dict_item in data %}
+                 <tr>
+                    {% for value in dict_item.values() %}
+                     <td> {{ value }} </td>
+                    {% endfor %} 
+                 </tr>
+            {% endfor %}
+        </table>
+    </body>
+
+</html>

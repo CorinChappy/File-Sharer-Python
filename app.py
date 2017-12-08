@@ -1,6 +1,6 @@
 from flask import *
 import os, uuid
-from database import init_db, checkLogin, register, addFile, collectFile
+from database import init_db, checkLogin, register, addFile, collectFile, userUploads
 app = Flask(__name__)
 
 init_db()
@@ -48,6 +48,7 @@ def logout():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    username = session['user']['id']
     f = request.files['file']
     if f and f.filename != '':
         id = str(uuid.uuid4())
@@ -55,7 +56,7 @@ def upload_file():
         os.makedirs(upload_dir)
         upload_location = os.path.join(upload_dir,f.filename)
         f.save(upload_location) 
-        addFile(id,f.filename) # to change later --- just testing it works
+        addFile(id,f.filename, username) #adds file to database including the user who uploaded it
         return "Upload success: your unique URL is: http://localhost:5000%s" % url_for('download',id=id, filename=f.filename)
     else:
         return "Please supply a file"
@@ -63,5 +64,14 @@ def upload_file():
 @app.route('/download/<id>/<filename>', methods=['GET'])
 def download(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
-    collectFile(id)
+    collectFile(id) 
     return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
+
+@app.route('/upload_list', methods = ['GET'])
+def uploadList():
+    if 'user' not in session:
+        return redirect(url_for('login')) #redirects user to login page
+    else:
+        username = session['user']['id']
+        data = userUploads(username)
+        return render_template('upload_list.html', **locals())

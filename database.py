@@ -43,20 +43,40 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-def addFile(uid, filename, expire = None, password = None, user = None, requireLogin = False):
+#def addFile(uid, filename, expire = None, password = None, user = None, requireLogin = False):
+#    mutate_db("INSERT INTO OneOffFiles (userId, uid, filename, expire, password, requireLogin) VALUES (?,?,?,?,?,?)",
+#        [user, uid, filename, expire, password, requireLogin])
+#    if requireLogin:
+#        requireLogin = 1
+#    else:
+#        requireLogin = 0
+
+
+def addFile(uid, filename, user, requireLogin = False, expire = None, password = None):
     mutate_db("INSERT INTO OneOffFiles (userId, uid, filename, expire, password, requireLogin) VALUES (?,?,?,?,?,?)",
         [user, uid, filename, expire, password, requireLogin])
-
     if requireLogin:
         requireLogin = 1
     else:
-        requireLogin = 0
+        requireLogin = 0 
 
-def collectFile(uid, user = None): #Sets the collected file to be True (or 1)
+def userUploads(username):
+    uploads = query_db("SELECT * FROM OneOffFiles WHERE userId = ?", [username])
+    #print uploads
+    if username is None:
+        return False
+    else:
+        return uploads
+
+def collectFile(uid, user = None, requireLogin = False): #Sets the collected file to be True (or 1)
     mutate_db("UPDATE OneOffFiles SET collected = ?, collectedUserId = ? WHERE uid = ?", [1, user, uid])
+    if requireLogin:
+        return 1
+    else:
+        return 0
 
 def checkLogin(username,password):
-    user = query_db('select * from User where email = ? and password = ?',
+    user = query_db('SELECT * FROM User WHERE email = ? AND password = ?',
                 [username,password], one=True)
     if user is None:
         return False
