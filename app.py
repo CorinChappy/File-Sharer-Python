@@ -48,18 +48,22 @@ def logout():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    username = session['user']['id']
-    f = request.files['file']
-    if f and f.filename != '':
-        id = str(uuid.uuid4())
-        upload_dir = os.path.join(app.config['UPLOAD_FOLDER'],id)
-        os.makedirs(upload_dir)
-        upload_location = os.path.join(upload_dir,f.filename)
-        f.save(upload_location) 
-        addFile(id,f.filename, username) #adds file to database including the user who uploaded it
-        return "Upload success: your unique URL is: http://localhost:5000%s" % url_for('download',id=id, filename=f.filename)
-    else:
-        return "Please supply a file"
+    userID = session['user']['id']
+
+    if request.method == 'POST' and 'files' in request.files:
+        url_list = []
+        for f in request.files.getlist('files'):
+            if f and f.filename != '':
+                id = str(uuid.uuid4())
+                upload_dir = os.path.join(app.config['UPLOAD_FOLDER'],id)
+                os.makedirs(upload_dir)
+                upload_location = os.path.join(upload_dir,f.filename)
+                f.save(upload_location) 
+                addFile(id,f.filename, userID)
+                url_list.append("http://localhost:5000%s" % url_for('download',id=id, filename=f.filename))
+            else: 
+                return "Please supply at least one file"
+        return render_template('submit.html', **locals())
 
 @app.route('/download/<id>/<filename>', methods=['GET'])
 def download(id,filename):

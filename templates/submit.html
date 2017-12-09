@@ -1,0 +1,13 @@
+<html>
+    <head>
+        <title>Upload Success!</title>
+    </head>
+    <body>
+        <h1> Your unique download link(s) are below: </h1>
+
+            {% for x in url_list %}
+                <p> {{ x }} </p>
+            {% endfor %}
+            
+    </body>
+</html>
