@@ -1,25 +1,41 @@
 <html>
     <head>
         <title>Your uploads</title>
+        <style>
+                table {
+                    border-collapse: collapse;
+                    width: 100%;
+                }
+                
+                td, th {
+                    border: 1px solid #dddddd;
+                    text-align: left;
+                    padding: 8px;
+                }
+                
+                tr:nth-child(even) {
+                    background-color: #dddddd;
+                }
+        </style>
     </head>
 
     <body>
         <h1>Your uploads</h1>
         <table>
             <!-- Column headers -->
-            {% if data %}
+            
             <tr>
-                {% for key in data[0] %}
-                    <th>{{ key }}</th> 
+                {% for header in headers %}
+                    <th>{{ header }}</th> 
                 {% endfor %}
             </tr>
-            {% endif %}
+            
 
             <!-- data entries -->
             {% for dict_item in data %}
                  <tr>
                     {% for value in dict_item.values() %}
-                     <td> {{ value }} </td>
+                     <td ALIGN=CENTER> {{ value }} </td>
                     {% endfor %} 
                  </tr>
             {% endfor %}
