@@ -65,11 +65,18 @@ def upload_file():
                 return "Please supply at least one file"
         return render_template('submit.html', **locals())
 
-@app.route('/download/<id>/<filename>', methods=['GET'])
+@app.route('/download/<id>/<filename>', methods=['GET']) #Landing page
 def download(id,filename):
+    uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id) 
+    fname = str(filename)
+    return render_template('download.html', **locals())
+
+@app.route('/download_file/<id>/<filename>', methods = ['GET']) #this does the actual downloading
+def download_file(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
-    collectFile(id) 
+    collectFile(id)
     return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
+
 
 @app.route('/upload_list', methods = ['GET'])
 def uploadList():
