@@ -17,6 +17,7 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
 
+
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -25,11 +26,13 @@ def get_db():
     db.row_factory = make_dicts
     return db
 
+
 def mutate_db(query, args=()):
     db = get_db()
     db.execute(query, args)
     db.commit()
     return True
+
 
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
@@ -37,11 +40,13 @@ def query_db(query, args=(), one=False):
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
 
 def addFile(uid, filename, user, requireLogin = False, expire = None, password = None):
     mutate_db("INSERT INTO OneOffFiles (userId, uid, filename, expire, password, requireLogin) VALUES (?,?,?,?,?,?)",
@@ -51,34 +56,38 @@ def addFile(uid, filename, user, requireLogin = False, expire = None, password =
     else:
         requireLogin = 0 
 
+
 def userUploads(username):
-    uploads = query_db("SELECT * FROM OneOffFiles WHERE userId = ?", [username])
+    uploads = query_db("SELECT * FROM OneOffFiles WHERE userId = ?", username)
     #print uploads
     if username is None:
         return False
     else:
         return uploads
 
+
 def collectFile(uid, user = None, requireLogin = False): #Sets the collected file to be True (or 1)
-    mutate_db("UPDATE OneOffFiles SET collected = ?, collectedUserId = ? WHERE uid = ?", [1, user, uid])
+    mutate_db("UPDATE OneOffFiles SET collected = ?, collectedUserId = ? WHERE uid = ?", (1, user, uid))
     if requireLogin:
         return 1
     else:
         return 0
 
+
 def checkLogin(username,password):
-    user = query_db('SELECT * FROM User WHERE email = ? AND password = ?',
-                [username,password], one=True)
+    user = query_db('SELECT * FROM User WHERE email = ? AND password = ?', (username, password), one=True)
     if user is None:
         return False
     else:
         return user
 
+
 def register(username,password,firstName,lastName):
     try:
         user = mutate_db("INSERT INTO User (email, password, firstName, lastName) VALUES (?,?,?,?)",
-                    [username,password,firstName,lastName])
+                    (username, password, firstName, lastName))
         return True
     except Exception as e:
+        app.logger.error(e)
         return False
     

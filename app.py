@@ -1,6 +1,8 @@
-from flask import *
+from flask import Flask, request, redirect, url_for, render_template, send_file, session, current_app, after_this_request
 import os, uuid
+
 from database import init_db, checkLogin, register, addFile, collectFile, userUploads
+
 app = Flask(__name__)
 
 init_db()
@@ -10,12 +12,14 @@ app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 @app.route('/', methods=['GET'])
 def index():
     if 'user' in session:
         return render_template('upload.html')
     else:
-        return "You are not logged in. Please login." #put login at some point
+        return redirect(url_for('login'))
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -27,6 +31,7 @@ def signup():
             return "Signup successful!"
         else:
             return "Signup failed: Email already exists!"
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -40,11 +45,13 @@ def login():
             session["user"] = user
             return "Hello %s" % user['firstName']
 
+
 @app.route('/logout')
 def logout():
-    # remove the username from the session if it's there
+    # Remove the username from the session if it's there
     session.pop('user', None)
     return "You have sucessfully logged out."
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -65,25 +72,49 @@ def upload_file():
                 return "Please supply at least one file"
         return render_template('submit.html', **locals())
 
+
 @app.route('/download/<id>/<filename>', methods=['GET']) #Landing page
 def download(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id) 
     fname = str(filename)
     return render_template('download.html', **locals())
 
-@app.route('/download_file/<id>/<filename>', methods = ['GET']) #this does the actual downloading
+
+@app.route('/download_file/<id>/<filename>')  # This does the actual downloading
 def download_file(id,filename):
     uploads = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id)
+
+    file_path = os.path.join(current_app.root_path, app.config['UPLOAD_FOLDER'],id,filename)
+    file_handle = open(file_path, 'r')
     collectFile(id)
-    return send_from_directory(directory=uploads, filename=filename, as_attachment=True)
+
+    # NOTE: This below request might not work on Windows
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(file_path)
+            if not os.listdir(uploads):
+                os.rmdir(uploads)
+            print('Deleted file (and possibly folder)')
+            file_handle.close()
+
+        except Exception as e:
+            app.logger.error("Error removing or closing downloaded file handle", e)
+        return response
+
+    return send_file(file_path, as_attachment=True)
 
 
 @app.route('/upload_list', methods = ['GET'])
 def uploadList():
     if 'user' not in session:
-        return redirect(url_for('login')) #redirects user to login page
+        return redirect(url_for('login'))  # Redirects user to login page
     else:
         username = session['user']['id']
         headers = ["FileID", "Requires Login", "UserID", "Filename", "Collected", "UserID", "Collected?", "Password", "ID"]
         data = userUploads(username)
         return render_template('upload_list.html', **locals())
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

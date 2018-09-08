@@ -6,10 +6,14 @@
   <body>
     <h1>Login here</h1>
     <form action="login" method="POST">
-      Username: <input type="text" name="username">
+      Username: <input type="text" name="username" required>
       <br>
-      Password: <input type="password" name="password">
+      Password: <input type="password" name="password" required>
       <br>
       <input type="submit" value="Log me in!">
+    </form>
+    <form action="signup">
+      <input type="submit" value="Register">
+    </form>
   </body>
 </html>
